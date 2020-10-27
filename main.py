@@ -4,21 +4,22 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.tree import DecisionTreeClassifier
 
 stopwords = ["a", "the"]
-data = pd.read_csv("spam.csv", encoding="latin-1")
+data = pd.read_csv("data.csv", encoding="utf-8")
 
-v2 = data["v2"]
+text = data["text"]
 X = []
 
-y = data["v1"]
+y = data["type"]
 
 labels = {
-    "0": "ham",
-    "1": "spam"
+    "0": "spam",
+    "1": "normal",
+    "2": "crap"
 }
 
 
-def remove_stopwords(v2, X):
-    for sentence in v2:
+def remove_stopwords(text, X):
+    for sentence in text:
         list = [word for word in sentence.split(
             " ") if (word not in stopwords)]
         processed_sentence = " ".join(list)
@@ -26,7 +27,7 @@ def remove_stopwords(v2, X):
     return X
 
 
-X = remove_stopwords(v2, X)
+X = remove_stopwords(text, X)
 
 vectorizer = TfidfVectorizer()
 digital_X = vectorizer.fit_transform(X)
@@ -36,10 +37,10 @@ model.fit(digital_X.toarray(), y)
 
 
 dataForPredict = pd.DataFrame(data={
-    "v2": ["Ok lar..."]
-})["v2"]
+    "text": ["Привет. Ты сделал свою работу?"]
+})["text"]
 
 X_val = vectorizer.transform(dataForPredict)
 
 result = str(model.predict(X_val.toarray())[0])
-print(labels[result])
+print(f"Your text is '{labels[result]}'")
