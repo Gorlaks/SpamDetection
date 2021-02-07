@@ -1,46 +1,43 @@
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+
 
 stopwords = ["a", "the"]
-data = pd.read_csv("data.csv", encoding="utf-8")
+data = pd.read_csv("spam.csv", encoding="latin-1")
 
-text = data["text"]
-X = []
+messages = data["v2"]
 
-y = data["type"]
+message_types = data["v1"]
 
-labels = {
-    "0": "spam",
-    "1": "normal",
-    "2": "crap"
-}
-
-
-def remove_stopwords(text, X):
-    for sentence in text:
+def remove_stopwords(messages):
+    processed_messages = []
+    for sentence in messages:
         list = [word for word in sentence.split(
             " ") if (word not in stopwords)]
         processed_sentence = " ".join(list)
-        X.append(processed_sentence)
-    return X
+        processed_messages.append(processed_sentence)
+    return processed_messages
 
 
-X = remove_stopwords(text, X)
+processed_messages = remove_stopwords(messages)
 
 vectorizer = TfidfVectorizer()
-digital_X = vectorizer.fit_transform(X)
+vectorized_X = vectorizer.fit_transform(processed_messages)
 
-model = DecisionTreeClassifier(random_state=0)
-model.fit(digital_X.toarray(), y)
+message_train, message_test, message_types_train, message_types_test = train_test_split(vectorized_X, message_types, test_size=0.3, random_state=20) 
 
+Spam_model = LogisticRegression(solver='liblinear', penalty='l1')
+Spam_model.fit(message_train, message_types_train)
 
-dataForPredict = pd.DataFrame(data={
-    "text": ["Привет. Ты сделал свою работу?"]
-})["text"]
+# Test
+dataForPredict = remove_stopwords(pd.DataFrame(data={
+    "v2": ["Dear Voucher Holder, To claim this weeks offer you have to become our partner"]
+})["v2"])
 
 X_val = vectorizer.transform(dataForPredict)
 
-result = str(model.predict(X_val.toarray())[0])
-print(f"Your text is '{labels[result]}'")
+result = Spam_model.predict(X_val)[0]
+print(f"Your text is '{result}'")
